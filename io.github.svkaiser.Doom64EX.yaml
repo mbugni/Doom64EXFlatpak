@@ -1,0 +1,49 @@
+app-id: io.github.svkaiser.Doom64EX
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: doom64ex.sh
+finish-args:
+  - --device=all
+  - --socket=x11
+  - --socket=pulseaudio
+  - --share=ipc
+  - --share=network
+cleanup:
+  - /include
+  - '*.a'
+  - '*.la'
+  - /lib*/cmake
+  - /lib*/debug
+  - /lib*/pkgconfig
+  - /share/man
+  - /share/cmake
+modules:
+  - shared-modules/linux-audio/fluidsynth2.json
+
+  # Build application from Git sources
+  - name: doom64ex-build
+    buildsystem: cmake
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DENABLE_SYSTEM_FLUIDSYNTH=ON
+      - -DOpenGL_GL_PREFERENCE=GLVND
+    sources:
+      - type: git
+        url: https://github.com/svkaiser/Doom64EX
+        commit: a5a8ccb87db062d4aacfbda09ac1404d49b5e973
+      - type: file
+        path: doom64ex.metainfo.xml
+      - type: file
+        path: doom64ex.sh
+    post-install:
+      # Patch desktop file using Flatpak references
+      - desktop-file-edit --set-key=Exec --set-value=doom64ex.sh distrib/doom64ex.desktop
+      - desktop-file-edit --set-icon=${FLATPAK_ID} distrib/doom64ex.desktop
+      # Install executable
+      - install -Dm 755 doom64ex /app/bin/doom64ex
+      # Install desktop files and icons
+      - install -Dm 644 doom64ex.metainfo.xml /app/share/metainfo/${FLATPAK_ID}.metainfo.xml
+      - install -Dm 644 distrib/doom64ex.desktop /app/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm 644 distrib/doom64ex.png /app/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png
+      - install -Dm 755 doom64ex.sh -t /app/bin
